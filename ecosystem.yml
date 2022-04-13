@@ -1,0 +1,8 @@
+apps:
+  - name: 'codemao-crm'
+    script: './dist/index.js'
+    kill_timeout: 10000
+    instances: 3
+    exec_mode: cluster
+    env:
+      NODE_ENV: development
