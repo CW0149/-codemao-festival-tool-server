@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "runBuild": "pm2 start ecosystem.yml --only codemao-crm",
-    "serve": "nodemon src/index.ts"
+    "serve": "nodemon src/index.ts",
+    "reload": "tsc && pm2 reload codemao-crm"
   },
   "author": "",
   "license": "ISC",

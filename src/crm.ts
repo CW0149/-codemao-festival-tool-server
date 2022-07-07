@@ -1,11 +1,12 @@
-import fetch from 'node-fetch';
+import fetch, { FetchError } from 'node-fetch';
 import dotenv from 'dotenv';
 
 const envConfig = dotenv.config()?.parsed;
 
 export const postCrmData = (
   url: string,
-  data?: Record<string, unknown>
+  data: Record<string, unknown> = {},
+  headers: Record<string, unknown> = {},
 ) => {
   return fetch(url, {
     method: "POST",
@@ -14,6 +15,7 @@ export const postCrmData = (
       Accept: "application/json, text/plain, */*",
       authorization_type: "3",
       Cookie: envConfig.COOKIE,
+      ...headers,
     },
     body: data && JSON.stringify(data),
   }).then((res: any) => {
@@ -68,4 +70,25 @@ export const getLogistics = (phone: string) => {
 
 export const getUserData = (userId: string) => {
   return getCrmData(`https://api-codecamp-crm.codemao.cn/users/${userId}`);
+}
+
+const getLoginTicket = () => {
+  return  postCrmData('https://open-service.codemao.cn/captcha/rule', {
+    identity: 'yanluxia@codemao.cn',
+    timestamp: Date.now(),
+  })
+};
+
+export const login = async () => {
+  const { ticket } = await getLoginTicket();
+  console.log(ticket);
+
+  return  postCrmData('https://internal-account-api.codemao.cn/auth/login', {
+    identity: 'yanluxia@codemao.cn',
+    password: 'Ylx100994',
+    timestamp: Date.now(),
+  }, {
+    'X-Captcha-Id': '',
+    'X-Captcha-Ticket': ticket
+  })
 }

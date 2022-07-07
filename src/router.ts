@@ -1,7 +1,8 @@
 import Router from '@koa/router';
-import { getLogistics, getStudentsAddrByClass, getStudentsByClass, getUserData } from './crm';
+import { getLogistics, getStudentsAddrByClass, getStudentsByClass, getUserData, login } from './crm';
 
 const router = new Router();
+router.prefix('/api/codemao');
 
 router.post('/class/students', async (ctx, next) => {
   const { class_id, term_id } = ctx.request.body;
