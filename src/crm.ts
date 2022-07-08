@@ -1,9 +1,15 @@
-import fetch, { FetchError } from 'node-fetch';
-import dotenv from 'dotenv';
+import fetch from 'node-fetch';
+import Koa from 'koa';
 
-const envConfig = dotenv.config()?.parsed;
+export type Ctx = Koa.Context;
+
+const getCookie = (ctx: Ctx) => {
+  const token = ctx.header.token;
+  return token ? `internal_account_token=${token}` : '';
+};
 
 export const postCrmData = (
+  ctx: Ctx,
   url: string,
   data: Record<string, unknown> = {},
   headers: Record<string, unknown> = {},
@@ -14,8 +20,8 @@ export const postCrmData = (
       "Content-Type": "application/json;charset=UTF-8",
       Accept: "application/json, text/plain, */*",
       authorization_type: "3",
-      Cookie: envConfig.COOKIE,
       ...headers,
+      Cookie: getCookie(ctx),
     },
     body: data && JSON.stringify(data),
   }).then((res: any) => {
@@ -23,69 +29,75 @@ export const postCrmData = (
   });
 };
 
+
 export const getCrmData = (
+  ctx: Ctx,
   url: string,
+  headers: Record<string, unknown> = {},
 ) => {
   return fetch(url, {
     method: "GET",
     headers: {
       Accept: "application/json, text/plain, */*",
       authorization_type: "3",
-      Cookie: envConfig.COOKIE,
+      ...headers,
+      Cookie: getCookie(ctx),
     },
   }).then((res: any) => {
     return res.json();
   });
 };
 
-export const getStudentsByClass = (classId: number, termId: number) => {
+export const getStudentsByClass =  (ctx: Ctx, classId: number, termId: number) => {
   return postCrmData(
+    ctx,
     "https://api-codecamp-crm.codemao.cn/annual/class/overview?page=1&limit=500",
     {
       class_id: classId,
       term_id: termId,
-    }
+    },
   );
 };
 
-export const getStudentsAddrByClass = (classId: number, termId: number) => {
-  return postCrmData(
+export const getStudentsAddrByClass =  (ctx: Ctx, classId: number, termId: number) => {
+  return postCrmData(ctx, 
     "https://api-codecamp-crm.codemao.cn/user-data/no-class",
     {
       class_id: classId,
       term_id: termId,
       page: 1,
       limit: 500,
-    }
+    },
+
   );
 };
 
-export const getLogistics = (phone: string) => {
-  return postCrmData('https://cloud-gateway.codemao.cn/platform-sup-chain-admin-service/admin/freight/waybill/query', {
+export const getLogistics =  (ctx: Ctx, phone: string) => {
+  return postCrmData(ctx, 'https://cloud-gateway.codemao.cn/platform-sup-chain-admin-service/admin/freight/waybill/query', {
     consigneePhone: phone,
     pageIndex: 1,
     pageSize: 20,
-  })
+  });
 };
 
-export const getUserData = (userId: string) => {
-  return getCrmData(`https://api-codecamp-crm.codemao.cn/users/${userId}`);
+export const getUserData = (ctx: Ctx, userId: string) => {
+  return getCrmData(ctx, `https://api-codecamp-crm.codemao.cn/users/${userId}`);
 }
 
-const getLoginTicket = () => {
-  return  postCrmData('https://open-service.codemao.cn/captcha/rule', {
-    identity: 'yanluxia@codemao.cn',
+const getLoginTicket =  (ctx: Ctx, email: string) => {
+  return  postCrmData(ctx, 'https://open-service.codemao.cn/captcha/rule', {
+    identity: email,
     timestamp: Date.now(),
-  })
+  },
+)
 };
 
-export const login = async () => {
-  const { ticket } = await getLoginTicket();
-  console.log(ticket);
+export const login =  async (ctx: Ctx, email: string, password: string) => {
+  const { ticket } = await getLoginTicket(ctx, email);
 
-  return  postCrmData('https://internal-account-api.codemao.cn/auth/login', {
-    identity: 'yanluxia@codemao.cn',
-    password: 'Ylx100994',
+  return  postCrmData(ctx, 'https://internal-account-api.codemao.cn/auth/login', {
+    identity: email,
+    password: password,
     timestamp: Date.now(),
   }, {
     'X-Captcha-Id': '',
